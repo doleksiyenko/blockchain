@@ -7,6 +7,7 @@ class Block {
         this.data = data;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
+        this.nonce = 0;
     }
 
     calculateHash() {
@@ -14,14 +15,31 @@ class Block {
             this.index +
                 this.previousHash +
                 this.timestamp +
-                JSON.stringify(this.data)
+                JSON.stringify(this.data) +
+                this.nonce
         ).toString();
+    }
+
+    mineBlock(difficulty) {
+        while (
+            this.hash.substring(0, difficulty) !==
+            Array(difficulty + 1).join("0")
+        ) {
+            this.nonce++;
+            this.hash = this.calculateHash();
+        }
+
+        console.log("Block mined: " + this.hash);
     }
 }
 
+/*
+
+*/
 class Blockchain {
     constructor() {
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 5;
     }
 
     createGenesisBlock() {
@@ -34,12 +52,28 @@ class Blockchain {
 
     addBlock(newBlock) {
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty);
         this.chain.push(newBlock);
+    }
+
+    isChainValid() {
+        for (let i = 1; i < this.chain.length; i++) {
+            const currBlock = this.chain[i];
+            const prevBlock = this.chain[i - 1];
+
+            if (currBlock.hash !== currBlock.calculateHash()) {
+                return false;
+            }
+
+            if (currBlock.previousHash !== prevBlock.hash) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
 let danioBlockChain = new Blockchain();
-danioBlockChain.addBlock(new Block(1, Date.now(), "2.3"));
 
-console.log(danioBlockChain);
+console.log("Mining block 1");
+danioBlockChain.addBlock(new Block(1, Date.now(), "2.3"));
